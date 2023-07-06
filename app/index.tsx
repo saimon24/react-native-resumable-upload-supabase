@@ -5,10 +5,11 @@ import Spinner from 'react-native-loading-spinner-overlay';
 import { supabase } from '../config/initSupabase';
 
 const Login = () => {
-  const [email, setEmail] = useState('simon@galaxies.dev');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Sign in with email and password
   const onSignInPress = async () => {
     setLoading(true);
 
@@ -21,6 +22,7 @@ const Login = () => {
     setLoading(false);
   };
 
+  // Create a new user
   const onSignUpPress = async () => {
     setLoading(true);
     const { error } = await supabase.auth.signUp({

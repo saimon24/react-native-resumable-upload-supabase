@@ -6,10 +6,12 @@ type AuthProps = {
   user: User | null;
   session: Session | null;
   initialized?: boolean;
+  signOut?: () => void;
 };
 
 export const AuthContext = createContext<Partial<AuthProps>>({});
 
+// Custom hook to read the context values
 export function useAuth() {
   return React.useContext(AuthContext);
 }
@@ -20,11 +22,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [initialized, setInitialized] = useState<boolean>(false);
 
   useEffect(() => {
+    // Listen for changes to authentication state
     const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // console.log(`Supabase auth event: ${event}`);
-      // console.log(`Supabase session: ${session}`);
-      // console.log(`Supabase user: ${session?.user}`);
-
       setSession(session);
       setUser(session ? session.user : null);
       setInitialized(true);
@@ -34,10 +33,16 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     };
   }, []);
 
+  // Log out the user
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   const value = {
     user,
     session,
     initialized,
+    signOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
