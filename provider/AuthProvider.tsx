@@ -17,7 +17,7 @@ export function useAuth() {
 }
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
-  const [user, setUser] = useState<User>();
+  const [user, setUser] = useState<User | null>();
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState<boolean>(false);
 

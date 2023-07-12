@@ -47,7 +47,7 @@ const list = () => {
   };
 
   const onRemoveImage = async (item: FileObject, listIndex: number) => {
-    supabase.storage.from('files').remove([`${user.id}/${item.name}`]);
+    supabase.storage.from('files').remove([`${user!.id}/${item.name}`]);
     const newFiles = [...files];
     newFiles.splice(listIndex, 1);
     setFiles(newFiles);
@@ -57,7 +57,7 @@ const list = () => {
     <View style={styles.container}>
       <ScrollView>
         {files.map((item, index) => (
-          <ImageItem key={item.id} item={item} userId={user.id} onRemoveImage={() => onRemoveImage(item, index)} />
+          <ImageItem key={item.id} item={item} userId={user!.id} onRemoveImage={() => onRemoveImage(item, index)} />
         ))}
       </ScrollView>
 

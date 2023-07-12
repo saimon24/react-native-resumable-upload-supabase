@@ -13,7 +13,7 @@ const ImageItem = ({ item, userId, onRemoveImage }: { item: FileObject; userId: 
     .download(`${userId}/${item.name}`)
     .then(({ data }) => {
       const fr = new FileReader();
-      fr.readAsDataURL(data);
+      fr.readAsDataURL(data!);
       fr.onload = () => {
         setImage(fr.result as string);
       };
