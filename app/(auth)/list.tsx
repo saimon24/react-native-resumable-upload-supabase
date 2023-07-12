@@ -7,7 +7,7 @@ import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from '../../config/initSupabase';
 import { FileObject } from '@supabase/storage-js';
-import ImageItem from '../../components/ImageItem';
+import ImageItem from '@/components/ImageItem';
 
 const list = () => {
   const { user } = useAuth();
@@ -21,8 +21,10 @@ const list = () => {
   }, [user]);
 
   const loadImages = async () => {
-    const { data } = await supabase.storage.from('files').list(user.id);
-    setFiles(data);
+    const { data } = await supabase.storage.from('files').list(user!.id);
+    if (data) {
+      setFiles(data);
+    }
   };
 
   const onSelectImage = async () => {
@@ -37,7 +39,7 @@ const list = () => {
     if (!result.canceled) {
       const img = result.assets[0];
       const base64 = await FileSystem.readAsStringAsync(img.uri, { encoding: 'base64' });
-      const filePath = `${user.id}/${new Date().getTime()}.${img.type === 'image' ? 'png' : 'mp4'}`;
+      const filePath = `${user!.id}/${new Date().getTime()}.${img.type === 'image' ? 'png' : 'mp4'}`;
       const contentType = img.type === 'image' ? 'image/png' : 'video/mp4';
       await supabase.storage.from('files').upload(filePath, decode(base64), { contentType });
       loadImages();

@@ -16,8 +16,11 @@ const ExpoSecureStoreAdapter = {
   },
 };
 
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
 // Initialize the Supabase client
-export const supabase = createClient('YOUR-SUPABASE-URL', 'YOUR-SUPABASE-ANON-KEY', {
+export const supabase = createClient(url, key, {
   auth: {
     storage: ExpoSecureStoreAdapter as any,
     detectSessionInUrl: false,
