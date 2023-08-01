@@ -4,6 +4,9 @@
     "web": {
       "bundler": "metro"
     },
+    "experiments": {
+      "tsconfigPaths": true
+    },
     "name": "myCloudApp",
     "slug": "myCloudApp",
     "plugins": [
