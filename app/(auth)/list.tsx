@@ -53,19 +53,6 @@ const list = () => {
       const SUPABASE_PROJECT_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
       const STORAGE_BUCKET = "files";
       const BEARER_TOKEN = session?.access_token;
-
-      if (
-        !SUPABASE_ANON_KEY ||
-        !SUPABASE_PROJECT_URL ||
-        !STORAGE_BUCKET ||
-        !BEARER_TOKEN
-      ) {
-        return {
-          data: null,
-          error: { message: "Resumable Upload: missing key" },
-        };
-      }
-
       const supabaseStorageURL = `${SUPABASE_PROJECT_URL}/storage/v1/upload/resumable`;
 
       const uppy = new Uppy().use(Tus, {
