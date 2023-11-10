@@ -9,6 +9,8 @@
     "@react-native-async-storage/async-storage": "1.18.2",
     "@supabase/supabase-js": "^2.26.0",
     "@types/react": "~18.2.14",
+    "@uppy/core": "^3.7.0",
+    "@uppy/tus": "^3.4.0",
     "base64-arraybuffer": "^1.0.2",
     "base64-js": "^1.5.1",
     "expo": "^49.0.2",

@@ -1,16 +1,16 @@
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { useAuth } from '../../provider/AuthProvider';
-import * as FileSystem from 'expo-file-system';
-import { decode } from 'base64-arraybuffer';
-import { supabase } from '../../config/initSupabase';
-import { FileObject } from '@supabase/storage-js';
-import ImageItem from '@/components/ImageItem';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { useAuth } from "../../provider/AuthProvider";
+import { supabase } from "../../config/initSupabase";
+import { FileObject } from "@supabase/storage-js";
+import ImageItem from "../../components/ImageItem";
+import Uppy from "@uppy/core";
+import Tus from "@uppy/tus";
 
 const list = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [files, setFiles] = useState<FileObject[]>([]);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const list = () => {
   }, [user]);
 
   const loadImages = async () => {
-    const { data } = await supabase.storage.from('files').list(user!.id);
+    const { data } = await supabase.storage.from("files").list(user!.id);
     if (data) {
       setFiles(data);
     }
@@ -35,19 +35,75 @@ const list = () => {
 
     const result = await ImagePicker.launchImageLibraryAsync(options);
 
-    // Save image if not cancelled
+    // Save image if not canceled
     if (!result.canceled) {
       const img = result.assets[0];
-      const base64 = await FileSystem.readAsStringAsync(img.uri, { encoding: 'base64' });
-      const filePath = `${user!.id}/${new Date().getTime()}.${img.type === 'image' ? 'png' : 'mp4'}`;
-      const contentType = img.type === 'image' ? 'image/png' : 'video/mp4';
-      await supabase.storage.from('files').upload(filePath, decode(base64), { contentType });
+      const uri = img.uri;
+      const fileName = img?.fileName ?? "";
+
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const file = new File([blob], fileName);
+
+      const filePath = `${user!.id}/${new Date().getTime()}.${
+        img.type === "image" ? "png" : "mp4"
+      }`;
+
+      const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+      const SUPABASE_PROJECT_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+      const STORAGE_BUCKET = "files";
+      const BEARER_TOKEN = session?.access_token;
+
+      if (
+        !SUPABASE_ANON_KEY ||
+        !SUPABASE_PROJECT_URL ||
+        !STORAGE_BUCKET ||
+        !BEARER_TOKEN
+      ) {
+        return {
+          data: null,
+          error: { message: "Resumable Upload: missing key" },
+        };
+      }
+
+      const supabaseStorageURL = `${SUPABASE_PROJECT_URL}/storage/v1/upload/resumable`;
+
+      const uppy = new Uppy().use(Tus, {
+        endpoint: supabaseStorageURL,
+        headers: {
+          authorization: `Bearer ${BEARER_TOKEN}`,
+          apikey: SUPABASE_ANON_KEY,
+        },
+        chunkSize: 6 * 1024 * 1024,
+        allowedMetaFields: [
+          "bucketName",
+          "objectName",
+          "contentType",
+          "cacheControl",
+        ],
+      });
+
+      const filteredFileName = fileName.replace(/[^a-z\d\.]/g, "-");
+
+      uppy.addFile({
+        name: filteredFileName,
+        type: file.type,
+        data: file,
+        meta: {
+          bucketName: STORAGE_BUCKET,
+          objectName: filePath,
+          contentType: file.type,
+        },
+      });
+
+      await uppy.upload();
+
       loadImages();
     }
   };
 
   const onRemoveImage = async (item: FileObject, listIndex: number) => {
-    supabase.storage.from('files').remove([`${user!.id}/${item.name}`]);
+    supabase.storage.from("files").remove([`${user!.id}/${item.name}`]);
     const newFiles = [...files];
     newFiles.splice(listIndex, 1);
     setFiles(newFiles);
@@ -57,13 +113,18 @@ const list = () => {
     <View style={styles.container}>
       <ScrollView>
         {files.map((item, index) => (
-          <ImageItem key={item.id} item={item} userId={user!.id} onRemoveImage={() => onRemoveImage(item, index)} />
+          <ImageItem
+            key={item.id}
+            item={item}
+            userId={user!.id}
+            onRemoveImage={() => onRemoveImage(item, index)}
+          />
         ))}
       </ScrollView>
 
       {/* FAB to add images */}
       <TouchableOpacity onPress={onSelectImage} style={styles.fab}>
-        <Ionicons name="camera-outline" size={30} color={'#fff'} />
+        <Ionicons name="camera-outline" size={30} color={"#fff"} />
       </TouchableOpacity>
     </View>
   );
@@ -73,18 +134,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#151515',
+    backgroundColor: "#151515",
   },
   fab: {
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     width: 70,
-    position: 'absolute',
+    position: "absolute",
     bottom: 40,
     right: 30,
     height: 70,
-    backgroundColor: '#2b825b',
+    backgroundColor: "#2b825b",
     borderRadius: 100,
   },
 });
